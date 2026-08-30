@@ -1,0 +1,11 @@
+stripe listen --forward-to localhost:3000/api/webhooks/stripe
+
+npm run dev
+
+
+
+
+
+git remote add origin https://github.com/ejpasayama-bit/salesmanagement.git
+git branch -M main
+git push -u origin main
