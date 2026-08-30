@@ -48,6 +48,11 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: 'メールアドレス、パスワード、会社名は必須です' }, { status: 400 });
     }
 
+    // 🌟 サーバー側でも文字数を厳格にチェック
+    if (password.length < 6) {
+      return NextResponse.json({ error: 'パスワードは6文字以上で設定してください' }, { status: 400 });
+    }
+
     const { data: authData, error: authError } = await supabase.auth.admin.createUser({
       email,
       password,
@@ -85,15 +90,22 @@ export async function PUT(req: Request) {
 
     if (!id) return NextResponse.json({ error: 'IDが不足しています' }, { status: 400 });
 
-    // 🌟 修正：パスワードが入力されている場合は、更新データに含める
     const authUpdateData: any = { user_metadata: { company_name } };
     if (email) authUpdateData.email = email;
-    if (password && password.trim() !== '') authUpdateData.password = password;
+    
+    if (password && password.trim() !== '') {
+      // 🌟 サーバー側でも文字数を厳格にチェック
+      if (password.length < 6) {
+        return NextResponse.json({ error: '新しいパスワードは6文字以上で設定してください' }, { status: 400 });
+      }
+      authUpdateData.password = password;
+    }
 
     const { error: authError } = await supabase.auth.admin.updateUserById(id, authUpdateData);
     
+    // 🌟 エラーを無視せず、失敗としてフロントエンドに返す
     if (authError) {
-       console.warn("Auth update failed, proceeding with DB update:", authError.message);
+      return NextResponse.json({ error: `認証情報の更新に失敗しました: ${authError.message}` }, { status: 400 });
     }
 
     const { error } = await supabase.from('partners').update({
