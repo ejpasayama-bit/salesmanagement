@@ -41,14 +41,15 @@ export async function POST(req: Request) {
     const body = await req.json();
     const { 
       email, password, company_name, contact_name, phone_number, postal_code, address,
-      bank_name, branch_name, account_type, account_number, account_name 
+      bank_name, branch_name, account_type, account_number, account_name,
+      commission_rate // 🌟 追加
     } = body;
 
     if (!email || !password || !company_name) {
       return NextResponse.json({ error: 'メールアドレス、パスワード、会社名は必須です' }, { status: 400 });
     }
 
-    // 🌟 サーバー側でも文字数を厳格にチェック
+    // サーバー側でも文字数を厳格にチェック
     if (password.length < 6) {
       return NextResponse.json({ error: 'パスワードは6文字以上で設定してください' }, { status: 400 });
     }
@@ -66,7 +67,8 @@ export async function POST(req: Request) {
     const { error: partnerError } = await supabase.from('partners').insert({
       id: userId,
       company_name, contact_name, phone_number, postal_code, address, email, 
-      bank_name, branch_name, account_type, account_number, account_name
+      bank_name, branch_name, account_type, account_number, account_name,
+      commission_rate: Number(commission_rate) || 0.3 // 🌟 追加（未指定の場合は0.3）
     });
 
     if (partnerError) {
@@ -85,7 +87,8 @@ export async function PUT(req: Request) {
     const body = await req.json();
     const { 
       id, email, password, company_name, contact_name, phone_number, postal_code, address,
-      bank_name, branch_name, account_type, account_number, account_name 
+      bank_name, branch_name, account_type, account_number, account_name,
+      commission_rate // 🌟 追加
     } = body;
 
     if (!id) return NextResponse.json({ error: 'IDが不足しています' }, { status: 400 });
@@ -94,7 +97,7 @@ export async function PUT(req: Request) {
     if (email) authUpdateData.email = email;
     
     if (password && password.trim() !== '') {
-      // 🌟 サーバー側でも文字数を厳格にチェック
+      // サーバー側でも文字数を厳格にチェック
       if (password.length < 6) {
         return NextResponse.json({ error: '新しいパスワードは6文字以上で設定してください' }, { status: 400 });
       }
@@ -103,14 +106,15 @@ export async function PUT(req: Request) {
 
     const { error: authError } = await supabase.auth.admin.updateUserById(id, authUpdateData);
     
-    // 🌟 エラーを無視せず、失敗としてフロントエンドに返す
+    // エラーを無視せず、失敗としてフロントエンドに返す
     if (authError) {
       return NextResponse.json({ error: `認証情報の更新に失敗しました: ${authError.message}` }, { status: 400 });
     }
 
     const { error } = await supabase.from('partners').update({
       company_name, contact_name, phone_number, postal_code, address, email,
-      bank_name, branch_name, account_type, account_number, account_name
+      bank_name, branch_name, account_type, account_number, account_name,
+      commission_rate: Number(commission_rate) || 0.3 // 🌟 追加
     }).eq('id', id);
 
     if (error) throw error;

@@ -6,9 +6,11 @@ import Link from 'next/link';
 export default function AdminPartnersPage() {
   const [partners, setPartners] = useState<any[]>([]);
   
+  // 🌟 修正：initialFormStateにcommission_rateを追加
   const initialFormState = {
     email: '', password: '', company_name: '', contact_name: '', phone_number: '', postal_code: '', address: '',
-    bank_name: '', branch_name: '', account_type: '普通', account_number: '', account_name: ''
+    bank_name: '', branch_name: '', account_type: '普通', account_number: '', account_name: '',
+    commission_rate: 0.3 // 追加
   };
   const [formData, setFormData] = useState(initialFormState);
   
@@ -34,6 +36,13 @@ export default function AdminPartnersPage() {
 
   const handleCreatePartner = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    // パスワード長チェック
+    if (formData.password.length < 6) {
+      setMessage('❌ エラー: 初期パスワードは6文字以上で設定してください。');
+      return;
+    }
+
     setIsLoading(true);
     setMessage('作成中...');
 
@@ -61,6 +70,13 @@ export default function AdminPartnersPage() {
 
   const handleUpdatePartner = async () => {
     if (!editingPartner) return;
+    
+    // パスワード長チェック
+    if (editForm.password && editForm.password.length < 6) {
+      setMessage('❌ エラー: 新しいパスワードは6文字以上で設定してください。');
+      return;
+    }
+
     setIsLoading(true);
     setMessage('更新中...');
 
@@ -144,11 +160,24 @@ export default function AdminPartnersPage() {
             </div>
             <div><label className="block font-bold text-gray-700 mb-1">住所</label><input type="text" className="w-full border rounded p-2" value={formData.address} onChange={e => setFormData({...formData, address: e.target.value})} /></div>
 
+            {/* 🌟 修正：紹介報酬レートの追加 */}
+            <div className="pt-2 border-t border-gray-200">
+              <label className="block font-bold text-gray-700 mb-1">紹介報酬レート</label>
+              <select 
+                className="w-full border rounded p-2 bg-white"
+                value={formData.commission_rate}
+                onChange={e => setFormData({...formData, commission_rate: Number(e.target.value)})}
+              >
+                <option value={0.3}>30% (通常スタート)</option>
+                <option value={0.5}>50% (VIP特例)</option>
+              </select>
+            </div>
+
             <div className="pt-2 border-t border-gray-200">
               <label className="block font-bold text-gray-700 mb-1">ログイン用メールアドレス</label><input type="email" required className="w-full border rounded p-2" value={formData.email} onChange={e => setFormData({...formData, email: e.target.value})} />
             </div>
             <div>
-              <label className="block font-bold text-gray-700 mb-1">初期パスワード</label><input type="text" required className="w-full border rounded p-2" value={formData.password} onChange={e => setFormData({...formData, password: e.target.value})} placeholder="例: password123" />
+              <label className="block font-bold text-gray-700 mb-1">初期パスワード</label><input type="text" required minLength={6} className="w-full border rounded p-2" value={formData.password} onChange={e => setFormData({...formData, password: e.target.value})} placeholder="例: password123 (6文字以上)" />
             </div>
 
             <div className="pt-4 border-t">
@@ -191,7 +220,13 @@ export default function AdminPartnersPage() {
                       {new Date(p.created_at).toLocaleDateString('ja-JP')}
                     </td>
                     <td className="py-4 px-2 align-top">
-                      <div className="font-bold text-gray-800 text-base mb-1">{p.company_name}</div>
+                      <div className="font-bold text-gray-800 text-base mb-1">
+                        {p.company_name}
+                        {/* レート表示のバッジ */}
+                        {p.commission_rate === 0.5 ? 
+                          <span className="ml-2 inline-block bg-yellow-100 text-yellow-800 text-[10px] px-2 py-0.5 rounded-full font-bold">50% VIP</span> 
+                          : <span className="ml-2 inline-block bg-gray-100 text-gray-600 text-[10px] px-2 py-0.5 rounded-full font-bold">30% 通常</span>}
+                      </div>
                       <div className="text-gray-600 text-xs mb-1">担当: {p.contact_name || '-'} / TEL: {p.phone_number || '-'}</div>
                       <div className="text-blue-600 text-xs break-all">{p.email}</div>
                     </td>
@@ -214,7 +249,8 @@ export default function AdminPartnersPage() {
                             setEditForm({
                               email: p.email, password: '', 
                               company_name: p.company_name, contact_name: p.contact_name || '', phone_number: p.phone_number || '', postal_code: p.postal_code || '', address: p.address || '',
-                              bank_name: p.bank_name || '', branch_name: p.branch_name || '', account_type: p.account_type || '普通', account_number: p.account_number || '', account_name: p.account_name || ''
+                              bank_name: p.bank_name || '', branch_name: p.branch_name || '', account_type: p.account_type || '普通', account_number: p.account_number || '', account_name: p.account_name || '',
+                              commission_rate: p.commission_rate ?? 0.3 // 追加
                             });
                           }}
                           className="bg-gray-100 hover:bg-gray-200 text-gray-700 text-xs font-bold py-1 px-3 rounded border border-gray-300 transition"
@@ -242,7 +278,7 @@ export default function AdminPartnersPage() {
         </div>
       </div>
 
-      {/* 🌟 編集用ポップアップ (パスワード追加 & ボタン順変更) */}
+      {/* 🌟 編集用ポップアップ */}
       {editingPartner && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4 overflow-y-auto">
           <div className="bg-white rounded-lg shadow-xl w-full max-w-lg p-6 my-8">
@@ -258,16 +294,28 @@ export default function AdminPartnersPage() {
               </div>
               <div><label className="block font-bold text-gray-700 mb-1">住所</label><input type="text" className="w-full border rounded p-2" value={editForm.address} onChange={e => setEditForm({...editForm, address: e.target.value})} /></div>
 
+              {/* 🌟 修正：編集フォームにも紹介報酬レートを追加 */}
+              <div className="pt-2 border-t border-gray-200">
+                <label className="block font-bold text-gray-700 mb-1">紹介報酬レート</label>
+                <select 
+                  className="w-full border rounded p-2 bg-white"
+                  value={editForm.commission_rate}
+                  onChange={e => setEditForm({...editForm, commission_rate: Number(e.target.value)})}
+                >
+                  <option value={0.3}>30% (通常スタート)</option>
+                  <option value={0.5}>50% (VIP特例)</option>
+                </select>
+              </div>
+
               <div className="pt-2 border-t border-gray-200">
                 <label className="block font-bold text-blue-700 mb-1">ログイン用メールアドレス</label>
                 <input type="email" required className="w-full border rounded p-2 border-blue-300 bg-blue-50" value={editForm.email} onChange={e => setEditForm({...editForm, email: e.target.value})} />
                 <p className="text-xs text-gray-500 mt-1">※変更すると次回のログインから新しいアドレスが必要になります。</p>
               </div>
 
-              {/* 🌟 修正：パスワード入力欄を追加 */}
               <div>
                 <label className="block font-bold text-red-600 mb-1">新しいパスワード (変更する場合のみ入力)</label>
-                <input type="text" className="w-full border rounded p-2 border-red-200 bg-red-50" value={editForm.password} onChange={e => setEditForm({...editForm, password: e.target.value})} placeholder="変更しない場合は空欄" />
+                <input type="text" minLength={6} className="w-full border rounded p-2 border-red-200 bg-red-50" value={editForm.password} onChange={e => setEditForm({...editForm, password: e.target.value})} placeholder="変更しない場合は空欄 (設定時は6文字以上)" />
               </div>
 
               <div className="pt-4 border-t">
@@ -283,7 +331,7 @@ export default function AdminPartnersPage() {
                 </div>
               </div>
             </div>
-            {/* 🌟 修正：ボタンの順序を 保存 → キャンセル に変更 */}
+            
             <div className="flex justify-end gap-3 flex-row-reverse">
               <button onClick={() => setEditingPartner(null)} className="px-4 py-2 border rounded text-gray-700 hover:bg-gray-50">キャンセル</button>
               <button onClick={handleUpdatePartner} disabled={isLoading} className="px-4 py-2 bg-blue-600 rounded text-white font-bold hover:bg-blue-700 disabled:opacity-50">保存する</button>

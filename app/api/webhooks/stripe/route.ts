@@ -53,7 +53,10 @@ export async function POST(req: Request) {
 
       const { data: leadData, error: fetchError } = await supabase
         .from('leads')
-        .select('*')
+        .select(`
+          *,
+          partners ( commission_rate )
+        `)
         .eq('id', leadId)
         .single();
         
@@ -62,23 +65,25 @@ export async function POST(req: Request) {
         return NextResponse.json({ received: true });
       }
 
-      // 🌟 システム設定から消費税率を取得
+      // システム設定から消費税率を取得
       const { data: settings } = await supabase.from('system_settings').select('*').eq('id', 'system').single();
       const taxRate = settings?.tax_rate !== undefined ? settings.tax_rate / 100 : 0.1;
 
-      // 🌟 修正：初期費用＋オプションの「税抜合計」を算出
+      // 初期費用＋オプションの「税抜合計」を算出
       const options = leadData.selected_options || [];
       const optionsTotalFee = options.reduce((sum: number, opt: any) => sum + (Number(opt.price) || 0), 0);
       const baseInitialFee = leadData.initial_fee || 0;
-      const subtotal = baseInitialFee + optionsTotalFee; // 税抜合計
+      const subtotal = baseInitialFee + optionsTotalFee;
 
-      // 🌟 修正：税込総額を算出し、その50%を紹介料とする
+      // 税込総額を算出
       const initialTax = Math.floor(subtotal * taxRate);
-      const totalAmountInclTax = subtotal + initialTax; // 税込合計
+      const totalAmountInclTax = subtotal + initialTax;
       
-      const rewardAmount = Math.floor(totalAmountInclTax * 0.5); // 税込総額の50%
+      // 🌟 修正：パートナーごとの紹介料率を適用（未設定の場合は安全のためデフォルト0.3とする）
+      const commissionRate = leadData.partners?.commission_rate ?? 0.3;
+      const rewardAmount = Math.floor(totalAmountInclTax * commissionRate); 
 
-      console.log(`✅ 計算結果 - 税抜小計: ${subtotal}円, 税込合計: ${totalAmountInclTax}円, 報酬額(50%): ${rewardAmount}円`);
+      console.log(`✅ 計算結果 - 税込合計: ${totalAmountInclTax}円, 報酬率: ${commissionRate * 100}%, 報酬額: ${rewardAmount}円`);
 
       const { error: leadError } = await supabase.from('leads').update({ 
         status: 'WON',
