@@ -8,7 +8,6 @@ const supabase = createClient(
 
 export async function GET(req: Request) {
   try {
-    // 🌟 修正：リクエストURLから userId を取得
     const { searchParams } = new URL(req.url);
     const userId = searchParams.get('userId');
 
@@ -16,7 +15,15 @@ export async function GET(req: Request) {
       return NextResponse.json({ error: 'User ID is required' }, { status: 400 });
     }
 
-    // 🌟 修正：partner_id が一致する案件だけを取得する（フィルタリング）
+    // 🌟 追加：パートナーの会社名を安全な裏側ルートで取得
+    const { data: partnerData } = await supabase
+      .from('partners')
+      .select('company_name')
+      .eq('id', userId)
+      .single();
+
+    const partnerName = partnerData?.company_name || '';
+
     const { data, error } = await supabase
       .from('leads')
       .select(`
@@ -33,7 +40,8 @@ export async function GET(req: Request) {
       contracts: lead.contracts ? (Array.isArray(lead.contracts) ? lead.contracts : [lead.contracts]) : []
     }));
 
-    return NextResponse.json({ success: true, data: formattedData });
+    // 🌟 修正：取得した partnerName も一緒に画面へ返す
+    return NextResponse.json({ success: true, data: formattedData, partnerName });
   } catch (error: any) {
     console.error('Dashboard Fetch Error:', error);
     return NextResponse.json({ error: error.message }, { status: 500 });

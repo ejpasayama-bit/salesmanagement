@@ -21,7 +21,6 @@ export async function POST(req: Request) {
     }
 
     const { data: settings } = await supabase.from('system_settings').select('*').eq('id', 'system').single();
-    // 🌟 修正：selected_options も一緒に取得する
     const { data: lead } = await supabase.from('leads').select('plan_name, selected_options').eq('id', lead_id).single();
     
     const planName = lead?.plan_name || '';
@@ -39,7 +38,6 @@ export async function POST(req: Request) {
       monthlyProductId = process.env.STRIPE_PROD_MONTHLY_TAKE!;
     }
 
-    // 🌟 追加：請求項目の配列を動的に組み立てる
     const addInvoiceItems: any[] = [];
 
     // ① 基本の初期費用
@@ -54,22 +52,26 @@ export async function POST(req: Request) {
       });
     }
 
-    // ② オプションごとの費用を追加
+    // 🌟 修正：オプションごとの費用を追加（for...of と stripe.products.create を使用）
     const options = lead?.selected_options || [];
-    options.forEach((opt: any) => {
+    for (const opt of options) {
       if (Number(opt.price) > 0) {
+        // 1. Stripe上にその場でオプション専用の商品（Product）を作成する
+        const optionProduct = await stripe.products.create({
+          name: `【オプション】${opt.name}`,
+        });
+
+        // 2. 作成された商品ID（optionProduct.id）を指定して明細に追加する
         addInvoiceItems.push({
           price_data: { 
             currency: 'jpy', 
-            product_data: {
-              name: `【オプション】${opt.name}`
-            },
+            product: optionProduct.id, 
             unit_amount: Number(opt.price) 
           },
           tax_rates: taxRates,
         });
       }
-    });
+    }
 
     const subscription = await stripe.subscriptions.create({
       customer: (await stripe.customers.create({
@@ -84,7 +86,6 @@ export async function POST(req: Request) {
           recurring: { interval: 'month' } 
         },
       }],
-      // 🌟 修正：組み立てた配列を追加
       ...(addInvoiceItems.length > 0 && { add_invoice_items: addInvoiceItems }),
       trial_end: Math.floor(new Date(new Date().getFullYear(), new Date().getMonth() + 1, 1).getTime() / 1000),
       metadata: { lead_id },

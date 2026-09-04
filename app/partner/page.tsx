@@ -73,20 +73,17 @@ export default function PartnerPage() {
   }, [router]);
 
   const fetchData = async (uid: string) => {
-    // 🌟 追加：パートナー情報の取得
-    const { data: partnerData } = await supabase
-      .from('partners')
-      .select('company_name')
-      .eq('id', uid)
-      .single();
-      
-    if (partnerData) {
-      setPartnerName(partnerData.company_name);
-    }
-
+    // APIから案件データと同時にパートナー名も取得（RLS回避）
     const res = await fetch(`/api/partner/dashboard?userId=${uid}`);
     const data = await res.json();
-    if (data.success) setDashboardData(data.data);
+    
+    if (data.success) {
+      setDashboardData(data.data);
+      // 🌟 APIの裏側ルートで取得した名前をセット
+      if (data.partnerName) {
+        setPartnerName(data.partnerName);
+      }
+    }
 
     const plansRes = await fetch('/api/plans');
     const plansData = await plansRes.json();
@@ -194,7 +191,7 @@ export default function PartnerPage() {
             <div className="absolute right-0 mt-2 w-56 bg-white border border-gray-200 rounded-lg shadow-lg z-50 overflow-hidden">
               <Link href="/partner/profile" className="block px-4 py-3 text-gray-700 hover:bg-blue-50 border-b border-gray-100">アカウント設定</Link>
               <Link href="/partner/flyers" className="block px-4 py-3 text-gray-700 hover:bg-blue-50 border-b border-gray-100">配布用チラシ請求</Link>
-              <Link href="/partner/resources" className="block px-4 py-3 text-blue-700 font-bold bg-blue-50 hover:bg-blue-100 border-b border-gray-100">📄 営業資料ダウンロード</Link>
+              <Link href="/partner/resources" className="block px-4 py-3 text-blue-700 font-bold bg-blue-50 hover:bg-blue-100 border-b border-gray-100">資料・ガイドライン</Link>
               <button onClick={handleLogout} className="w-full text-left block px-4 py-3 text-red-600 hover:bg-red-50 font-medium">ログアウト</button>
             </div>
           )}
