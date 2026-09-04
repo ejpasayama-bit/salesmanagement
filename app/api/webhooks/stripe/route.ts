@@ -62,9 +62,23 @@ export async function POST(req: Request) {
         return NextResponse.json({ received: true });
       }
 
-      const initialFee = leadData.initial_fee || 0;
-      const rewardAmount = Math.floor(initialFee * 0.3);
-      console.log(`✅ 計算結果 - 初期費用: ${initialFee}円, 報酬額: ${rewardAmount}円`);
+      // 🌟 システム設定から消費税率を取得
+      const { data: settings } = await supabase.from('system_settings').select('*').eq('id', 'system').single();
+      const taxRate = settings?.tax_rate !== undefined ? settings.tax_rate / 100 : 0.1;
+
+      // 🌟 修正：初期費用＋オプションの「税抜合計」を算出
+      const options = leadData.selected_options || [];
+      const optionsTotalFee = options.reduce((sum: number, opt: any) => sum + (Number(opt.price) || 0), 0);
+      const baseInitialFee = leadData.initial_fee || 0;
+      const subtotal = baseInitialFee + optionsTotalFee; // 税抜合計
+
+      // 🌟 修正：税込総額を算出し、その50%を紹介料とする
+      const initialTax = Math.floor(subtotal * taxRate);
+      const totalAmountInclTax = subtotal + initialTax; // 税込合計
+      
+      const rewardAmount = Math.floor(totalAmountInclTax * 0.5); // 税込総額の50%
+
+      console.log(`✅ 計算結果 - 税抜小計: ${subtotal}円, 税込合計: ${totalAmountInclTax}円, 報酬額(50%): ${rewardAmount}円`);
 
       const { error: leadError } = await supabase.from('leads').update({ 
         status: 'WON',
@@ -76,7 +90,7 @@ export async function POST(req: Request) {
 
       const { error: contractError } = await supabase.from('contracts').upsert({
         lead_id: leadId,
-        sales_amount: initialFee,
+        sales_amount: totalAmountInclTax, // 記録上の売上も税込総額に変更
         reward_amount: rewardAmount,
         stripe_invoice_id: invoice.id,
         payment_status: 'PAID_BY_CLIENT',

@@ -107,7 +107,7 @@ export default function SettingsPage() {
           <h2 className="text-xl font-bold mb-4 border-b pb-2">自動送信テンプレート</h2>
           <p className="text-sm text-gray-600 mb-6">
             紹介者が案件を登録した瞬間に、顧客へ自動送信される初回挨拶メールの文面です。<br/>
-            文中に <code>{`{company}`}</code>、<code>{`{name}`}</code>、<code>{`{plan}`}</code> と入力すると、顧客の情報に自動で置き換わります。
+            コード <code>{`{company}`}</code>、<code>{`{name}`}</code>、<code>{`{plan}`}</code>、<code>{`{partner}`}</code> が使用可。
           </p>
 
           <div className="space-y-6">

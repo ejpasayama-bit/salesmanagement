@@ -23,6 +23,9 @@ export default function PartnerPage() {
   const router = useRouter();
   const [isCheckingAuth, setIsCheckingAuth] = useState(true);
   const [userId, setUserId] = useState<string | null>(null);
+  
+  // 🌟 追加：パートナーの会社名を保持するステート
+  const [partnerName, setPartnerName] = useState<string>('');
 
   const [formData, setFormData] = useState({ 
     client_company: '', 
@@ -35,9 +38,7 @@ export default function PartnerPage() {
     remarks: ''
   });
   
-  // 🌟 追加：オプションの「あり/なし」を管理するステート
   const [hasOptions, setHasOptions] = useState(false);
-
   const [message, setMessage] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [dashboardData, setDashboardData] = useState<any[]>([]);
@@ -72,6 +73,17 @@ export default function PartnerPage() {
   }, [router]);
 
   const fetchData = async (uid: string) => {
+    // 🌟 追加：パートナー情報の取得
+    const { data: partnerData } = await supabase
+      .from('partners')
+      .select('company_name')
+      .eq('id', uid)
+      .single();
+      
+    if (partnerData) {
+      setPartnerName(partnerData.company_name);
+    }
+
     const res = await fetch(`/api/partner/dashboard?userId=${uid}`);
     const data = await res.json();
     if (data.success) setDashboardData(data.data);
@@ -89,7 +101,6 @@ export default function PartnerPage() {
     setMessage('送信中...');
 
     try {
-      // 🌟 追加：送信時に「オプションなし」が選ばれていたら配列を空にして送る安全策
       const finalData = { 
         ...formData, 
         partner_id: userId,
@@ -115,7 +126,7 @@ export default function PartnerPage() {
           selected_options: [],
           remarks: ''
         });
-        setHasOptions(false); // 送信後は「オプションなし」にリセット
+        setHasOptions(false); 
         fetchData(userId); 
       } else {
         setMessage('❌ エラー: ' + data.error);
@@ -164,6 +175,11 @@ export default function PartnerPage() {
 
   return (
     <div className="p-10 max-w-6xl mx-auto font-sans">
+      {/* 🌟 追加：パートナーへの挨拶文 */}
+      <div className="mb-2 text-gray-600 font-medium text-sm">
+        {partnerName ? `${partnerName} 様、お世話になっております。` : 'お世話になっております。'}
+      </div>
+      
       <div className="flex justify-between items-center mb-8 relative">
         <h1 className="text-3xl font-bold text-gray-800">パートナー・ダッシュボード</h1>
         
@@ -212,7 +228,6 @@ export default function PartnerPage() {
               <p className="text-xs text-gray-500 mt-1">※合意済みの場合のみ選択してください。</p>
             </div>
 
-            {/* 🌟 修正：オプションの「あり/なし」ラジオボタン */}
             <div className="pt-4 border-t border-gray-100 mt-2">
               <label className="block text-sm font-medium text-gray-700 mb-2">ご希望のオプション（任意）</label>
               <div className="flex gap-4 mb-3">
@@ -238,7 +253,6 @@ export default function PartnerPage() {
                 </label>
               </div>
 
-              {/* 🌟 修正：「あり」が選ばれた時だけリストを展開して表示 */}
               {hasOptions && (
                 <div className="space-y-2 bg-gray-50 p-3 rounded border border-gray-200">
                   {OPTION_LIST.map((opt, index) => {

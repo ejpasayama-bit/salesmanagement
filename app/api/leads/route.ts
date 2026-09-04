@@ -51,7 +51,7 @@ export async function POST(req: Request) {
       if (settings && settings.sender_email) {
         const isPlanDecided = !!plan_name;
         const rawTemplate = isPlanDecided ? settings.template_plan_decided : settings.template_plan_undecided;
-        const subject = isPlanDecided ? '【ご案内】お見積もり作成につきまして' : '【ご案内】今後の流れにつきまして';
+        const subject = isPlanDecided ? '【ご案内】Webサイト・業務アプリ導入に向けた初回ヒアリングのお願い（EasyJ Studio）' : '【ご案内】Webサイト・業務アプリ導入に向けた初回ヒアリングのお願い（EasyJ Studio）';
 
         // 🌟 修正：{partner} を紹介者の会社名に変換 ＆ \n を実際の改行コードに変換
         const emailBody = rawTemplate
