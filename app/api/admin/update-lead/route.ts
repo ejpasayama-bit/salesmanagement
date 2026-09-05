@@ -21,6 +21,13 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: '必須パラメータが不足しています' }, { status: 400 });
     }
 
+    const dateFields = ['delivery_deadline', 'estimate_sent_at', 'started_at', 'invoiced_at', 'client_paid_at'];
+    for (const field of dateFields) {
+      if (updates[field] === '') {
+        updates[field] = null;
+      }
+    }
+
     const { error } = await supabase.from('leads').update(updates).eq('id', lead_id);
     if (error) throw error;
 

@@ -15,14 +15,15 @@ export async function GET(req: Request) {
       return NextResponse.json({ error: 'User ID is required' }, { status: 400 });
     }
 
-    // 🌟 追加：パートナーの会社名を安全な裏側ルートで取得
+    // 🌟 修正：company_name と一緒に commission_rate も取得
     const { data: partnerData } = await supabase
       .from('partners')
-      .select('company_name')
+      .select('company_name, commission_rate')
       .eq('id', userId)
       .single();
 
     const partnerName = partnerData?.company_name || '';
+    const commissionRate = partnerData?.commission_rate ?? 0.3; // 未設定の場合は30%
 
     const { data, error } = await supabase
       .from('leads')
@@ -40,8 +41,8 @@ export async function GET(req: Request) {
       contracts: lead.contracts ? (Array.isArray(lead.contracts) ? lead.contracts : [lead.contracts]) : []
     }));
 
-    // 🌟 修正：取得した partnerName も一緒に画面へ返す
-    return NextResponse.json({ success: true, data: formattedData, partnerName });
+    // 🌟 修正：commissionRate もレスポンスに含める
+    return NextResponse.json({ success: true, data: formattedData, partnerName, commissionRate });
   } catch (error: any) {
     console.error('Dashboard Fetch Error:', error);
     return NextResponse.json({ error: error.message }, { status: 500 });

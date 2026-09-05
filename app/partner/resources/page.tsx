@@ -102,7 +102,8 @@ export default function PartnerResourcesPage() {
           </div>
         </section>
 
-        {/* Web・ブログ用バナー */}
+        {/*
+        // Web・ブログ用バナー
         <section className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
           <h2 className="text-xl font-bold mb-4 border-b pb-2 text-gray-800 flex items-center gap-2">
             <span className="text-purple-600">🖼️</span> Web紹介用バナー
@@ -143,6 +144,7 @@ export default function PartnerResourcesPage() {
             </div>
           </div>
         </section>
+        */}
 
         {/* ガイドライン・規約 */}
         <section className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
@@ -162,7 +164,7 @@ export default function PartnerResourcesPage() {
               </ul>
             </div>
             <div className="flex flex-col sm:flex-row gap-4 pt-2">
-              <a href="/materials/terms.pdf" target="_blank" className="text-blue-600 hover:underline font-bold text-sm flex items-center gap-1">
+              <a href="/materials/partner_terms.pdf" target="_blank" className="text-blue-600 hover:underline font-bold text-sm flex items-center gap-1">
                 📄 パートナー利用規約 (PDF)
               </a>
               <a href="/materials/clients_terms.pdf" target="_blank" className="text-blue-600 hover:underline font-bold text-sm flex items-center gap-1">

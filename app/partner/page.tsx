@@ -26,6 +26,7 @@ export default function PartnerPage() {
   
   // 🌟 追加：パートナーの会社名を保持するステート
   const [partnerName, setPartnerName] = useState<string>('');
+  const [commissionRate, setCommissionRate] = useState<number>(0.3);
 
   const [formData, setFormData] = useState({ 
     client_company: '', 
@@ -73,15 +74,17 @@ export default function PartnerPage() {
   }, [router]);
 
   const fetchData = async (uid: string) => {
-    // APIから案件データと同時にパートナー名も取得（RLS回避）
     const res = await fetch(`/api/partner/dashboard?userId=${uid}`);
     const data = await res.json();
     
     if (data.success) {
       setDashboardData(data.data);
-      // 🌟 APIの裏側ルートで取得した名前をセット
       if (data.partnerName) {
         setPartnerName(data.partnerName);
+      }
+      // 🌟 追加：APIから返ってきた報酬率をセット
+      if (data.commissionRate !== undefined) {
+        setCommissionRate(data.commissionRate);
       }
     }
 
@@ -173,8 +176,13 @@ export default function PartnerPage() {
   return (
     <div className="p-10 max-w-6xl mx-auto font-sans">
       {/* 🌟 追加：パートナーへの挨拶文 */}
-      <div className="mb-2 text-gray-600 font-medium text-sm">
-        {partnerName ? `${partnerName} 様、お世話になっております。` : 'お世話になっております。'}
+      <div className="mb-2 flex items-center gap-3">
+        <span className="text-gray-600 font-medium text-sm">
+          {partnerName ? `${partnerName} 様、お世話になっております。` : 'お世話になっております。'}
+        </span>
+        <span className="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded-full font-bold">
+          現在の紹介報酬: {commissionRate * 100}%
+        </span>
       </div>
       
       <div className="flex justify-between items-center mb-8 relative">
