@@ -198,6 +198,7 @@ export default function PartnerPage() {
           {isMenuOpen && (
             <div className="absolute right-0 mt-2 w-56 bg-white border border-gray-200 rounded-lg shadow-lg z-50 overflow-hidden">
               <Link href="/partner/profile" className="block px-4 py-3 text-gray-700 hover:bg-blue-50 border-b border-gray-100">アカウント設定</Link>
+              <Link href="/partner/payments" className="block px-4 py-3 text-gray-700 hover:bg-blue-50 border-b border-gray-100">支払履歴・明細</Link>
               <Link href="/partner/flyers" className="block px-4 py-3 text-gray-700 hover:bg-blue-50 border-b border-gray-100">配布用チラシ請求</Link>
               <Link href="/partner/resources" className="block px-4 py-3 text-blue-700 font-bold bg-blue-50 hover:bg-blue-100 border-b border-gray-100">資料・ガイドライン</Link>
               <button onClick={handleLogout} className="w-full text-left block px-4 py-3 text-red-600 hover:bg-red-50 font-medium">ログアウト</button>
