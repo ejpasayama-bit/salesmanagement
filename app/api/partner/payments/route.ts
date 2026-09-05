@@ -28,15 +28,19 @@ export async function GET(req: Request) {
 
     if (error) throw error;
 
-    // データの整形
-    const formattedData = data.map(lead => ({
-      id: lead.id,
-      client_company: lead.client_company,
-      plan_name: lead.plan_name,
-      introduced_at: lead.created_at,
-      reward_amount: lead.contracts[0]?.reward_amount || 0,
-      paid_at: lead.contracts[0]?.updated_at,
-    }));
+    // 🌟 修正：Supabaseのレスポンスがオブジェクトの場合と配列の場合の両方に安全に対応する
+    const formattedData = data.map(lead => {
+      const contract = Array.isArray(lead.contracts) ? lead.contracts[0] : lead.contracts;
+      
+      return {
+        id: lead.id,
+        client_company: lead.client_company,
+        plan_name: lead.plan_name,
+        introduced_at: lead.created_at,
+        reward_amount: contract?.reward_amount || 0,
+        paid_at: contract?.updated_at || null,
+      };
+    });
 
     return NextResponse.json({ success: true, data: formattedData });
   } catch (error: any) {
