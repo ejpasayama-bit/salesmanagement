@@ -25,26 +25,18 @@ export default function PartnerPaymentsPage() {
         return;
       }
       
-      // 自身の名前を取得
-      const { data: partnerData } = await supabase
-        .from('partners')
-        .select('company_name')
-        .eq('id', session.user.id)
-        .single();
-      if (partnerData) setPartnerName(partnerData.company_name);
-
-      // 支払履歴を取得
+      // 🌟 修正：APIから支払履歴と名前を同時に取得する
       const res = await fetch(`/api/partner/payments?userId=${session.user.id}`);
       const data = await res.json();
       if (data.success) {
         setPayments(data.data);
+        if (data.partnerName) setPartnerName(data.partnerName); // 名前をセット
       }
       setIsLoading(false);
     };
     checkUserAndFetch();
   }, [router]);
 
-  // ブラウザの印刷機能を呼び出してPDF保存させる
   const handlePrint = () => {
     window.print();
   };
@@ -104,12 +96,12 @@ export default function PartnerPaymentsPage() {
         </div>
       )}
 
-      {/* 🌟 明細書モーダル (印刷用エリア) */}
+      {/* 🌟 修正：外側の枠から hide-on-print を外し、print-modal-wrapper に変更 */}
       {selectedPayment && (
-        <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4 hide-on-print">
-          <div className="bg-white rounded-lg shadow-2xl w-full max-w-2xl max-h-[90vh] flex flex-col">
+        <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4 print-modal-wrapper">
+          <div className="bg-white rounded-lg shadow-2xl w-full max-w-2xl max-h-[90vh] flex flex-col print-modal-content">
             
-            {/* モーダルヘッダー (印刷時は非表示) */}
+            {/* モーダルヘッダー (ここは印刷時は非表示) */}
             <div className="flex justify-between items-center p-4 border-b border-gray-200 hide-on-print">
               <h2 className="font-bold text-gray-800 text-lg">支払明細書</h2>
               <div className="flex gap-2">
@@ -123,7 +115,7 @@ export default function PartnerPaymentsPage() {
             </div>
 
             {/* 印刷対象エリア */}
-            <div className="p-10 overflow-y-auto print-area bg-white">
+            <div className="p-10 overflow-y-auto print-area bg-white text-black">
               <div className="text-center mb-10">
                 <h1 className="text-2xl font-bold tracking-widest text-gray-800 border-b-2 border-gray-800 pb-2 inline-block">支払明細書</h1>
               </div>
@@ -139,8 +131,8 @@ export default function PartnerPaymentsPage() {
                   <p className="mb-1">発行日: {new Date().toLocaleDateString('ja-JP')}</p>
                   <div className="mt-4">
                     <p className="font-bold text-base">EasyJ Studio</p>
-                    <p>〒XXX-XXXX 愛知県刈谷市XXXX</p>
-                    <p>適格請求書発行事業者登録番号: TXXXXXXXXXXXXX</p>
+                    <p>〒101-0041　東京都千代田区神田須田町1丁目7番8号　VORT秋葉原Ⅳ 2F</p>
+                    <p>local@easyjstudio.com</p>
                   </div>
                 </div>
               </div>
@@ -180,13 +172,39 @@ export default function PartnerPaymentsPage() {
         </div>
       )}
 
-      {/* 印刷用のCSS */}
+      {/* 🌟 修正：印刷用のCSSを書き換え */}
       <style dangerouslySetInnerHTML={{__html: `
         @media print {
           body * { visibility: hidden; }
           .hide-on-print { display: none !important; }
-          .print-area, .print-area * { visibility: visible; }
-          .print-area { position: absolute; left: 0; top: 0; width: 100%; padding: 20px; box-sizing: border-box; }
+          
+          /* モーダルの背景と配置をリセットし、中身だけを抽出 */
+          .print-modal-wrapper {
+            position: absolute !important;
+            top: 0 !important;
+            left: 0 !important;
+            background: transparent !important;
+            padding: 0 !important;
+            display: block !important;
+          }
+          .print-modal-content {
+            box-shadow: none !important;
+            max-height: none !important;
+            width: 100% !important;
+            max-width: 100% !important;
+            border: none !important;
+          }
+          .print-area, .print-area * { 
+            visibility: visible !important; 
+          }
+          .print-area { 
+            position: absolute; 
+            left: 0; 
+            top: 0; 
+            width: 100%; 
+            padding: 0 !important;
+            overflow: visible !important;
+          }
         }
       `}} />
     </div>

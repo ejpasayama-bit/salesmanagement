@@ -15,6 +15,15 @@ export async function GET(req: Request) {
       return NextResponse.json({ error: 'User ID is required' }, { status: 400 });
     }
 
+    // 🌟 追加：パートナーの会社名を安全なルートで取得（RLS回避）
+    const { data: partnerData } = await supabase
+      .from('partners')
+      .select('company_name')
+      .eq('id', userId)
+      .single();
+
+    const partnerName = partnerData?.company_name || '';
+
     // パートナー自身の案件で、支払ステータスが「PAID」のものだけを抽出
     const { data, error } = await supabase
       .from('leads')
@@ -28,7 +37,6 @@ export async function GET(req: Request) {
 
     if (error) throw error;
 
-    // 🌟 修正：Supabaseのレスポンスがオブジェクトの場合と配列の場合の両方に安全に対応する
     const formattedData = data.map(lead => {
       const contract = Array.isArray(lead.contracts) ? lead.contracts[0] : lead.contracts;
       
@@ -42,7 +50,8 @@ export async function GET(req: Request) {
       };
     });
 
-    return NextResponse.json({ success: true, data: formattedData });
+    // 🌟 修正：partnerName も一緒に画面へ返す
+    return NextResponse.json({ success: true, data: formattedData, partnerName });
   } catch (error: any) {
     console.error('Payments Fetch Error:', error);
     return NextResponse.json({ error: error.message }, { status: 500 });
